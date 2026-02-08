@@ -35,6 +35,10 @@ jobs:
       - name: Install Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
 
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: py${{ matrix.python-version }}
+
       - name: Create virtual environment
         shell: bash
         run: python -m venv .venv
