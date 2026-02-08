@@ -69,7 +69,14 @@ pub fn validate_logo(
         } else {
             after_decl
         };
-        if !after_doctype.to_lowercase().starts_with("<svg") {
+        // Skip XML comments (<!-- ... -->)
+        let mut after_comments = after_doctype;
+        while after_comments.starts_with("<!--") {
+            after_comments = after_comments.find("-->")
+                .map(|i| after_comments[i + 3..].trim_start())
+                .unwrap_or(after_comments);
+        }
+        if !after_comments.to_lowercase().starts_with("<svg") {
             result.add(ValidationError::error(
                 "Logo",
                 "File has .svg extension but is not a valid SVG (root element is not <svg>)",
