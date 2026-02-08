@@ -34,15 +34,70 @@ jobs:
       - name: Install Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
 
-      - name: Install maturin and build
+      - name: Create virtual environment
+        shell: bash
+        run: python -m venv .venv
+
+      - name: Install maturin and build (Linux/macOS)
+        if: runner.os != 'Windows'
         shell: bash
         run: |
+          source .venv/bin/activate
           pip install maturin
           maturin develop --release
 
-      - name: Test import and functionality
+      - name: Install maturin and build (Windows)
+        if: runner.os == 'Windows'
         shell: bash
         run: |
+          source .venv/Scripts/activate
+          pip install maturin
+          maturin develop --release
+
+      - name: Test import and functionality (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          source .venv/bin/activate
+          python -c "
+          import ofd_validator
+
+          # Test types
+          r = ofd_validator.ValidationResult()
+          assert r.is_valid == True
+          assert r.error_count == 0
+          assert r.warning_count == 0
+
+          # Test error creation
+          e = ofd_validator.ValidationError(ofd_validator.ValidationLevel.Error, 'Test', 'test msg', '/path')
+          r.add_error(e)
+          assert r.error_count == 1
+          assert r.is_valid == False
+
+          # Test to_dict
+          d = r.to_dict()
+          assert d['error_count'] == 1
+          assert d['is_valid'] == False
+
+          # Test all functions exist
+          assert callable(ofd_validator.validate_all)
+          assert callable(ofd_validator.validate_json_files)
+          assert callable(ofd_validator.validate_logo_files)
+          assert callable(ofd_validator.validate_folder_names)
+          assert callable(ofd_validator.validate_store_ids)
+          assert callable(ofd_validator.validate_gtin_ean)
+          assert callable(ofd_validator.validate_required_files)
+          assert callable(ofd_validator.validate_logo_file)
+          assert callable(ofd_validator.validate_folder_name)
+
+          print('All tests passed')
+          "
+
+      - name: Test import and functionality (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          source .venv/Scripts/activate
           python -c "
           import ofd_validator
 
