@@ -1,5 +1,5 @@
 [build-system]
-requires = ["maturin>=1.5,<2.0"]
+requires = ["maturin>=1.7,<2.0"]
 build-backend = "maturin"
 
 [project]
@@ -7,13 +7,10 @@ name = "ofd-validator"
 version = "0.1.0"
 description = "High-performance validation library for the Open Filament Database"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 keywords = ["validation", "filament", "3d-printing", "database", "rust", "pyo3"]
 authors = [
-    { name = "Open Filament Collective" }
-]
-maintainers = [
     { name = "Open Filament Collective" }
 ]
 classifiers = [
@@ -22,12 +19,11 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Rust",
     "Topic :: Software Development :: Libraries",
@@ -35,11 +31,11 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/OpenFilamentCollective/open-filament-database"
-Repository = "https://github.com/OpenFilamentCollective/open-filament-database"
-Issues = "https://github.com/OpenFilamentCollective/open-filament-database/issues"
+Homepage = "https://github.com/OpenFilamentCollective/ofd-validator"
+Repository = "https://github.com/OpenFilamentCollective/ofd-validator"
+Issues = "https://github.com/OpenFilamentCollective/ofd-validator/issues"
 
 [tool.maturin]
-features = ["python"]
+features = ["pyo3/extension-module"]
 module-name = "ofd_validator"
 strip = true

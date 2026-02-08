@@ -5,41 +5,23 @@ edition = "2021"
 authors = ["Open Filament Collective"]
 license = "MIT"
 description = "High-performance validation library for the Open Filament Database"
-repository = "https://github.com/OpenFilamentCollective/open-filament-database"
+repository = "https://github.com/OpenFilamentCollective/ofd-validator"
 keywords = ["validation", "filament", "3d-printing", "database"]
 categories = ["command-line-utilities", "development-tools"]
 
 [lib]
 name = "ofd_validator"
-crate-type = ["rlib", "cdylib"]  # Both static and dynamic libs
-
-[[bin]]
-name = "ofd-validator"
-path = "src/main.rs"
-required-features = ["binary"]
-
-[features]
-default = []
-python = ["pyo3"]
-binary = ["clap"]
+crate-type = ["cdylib"]
 
 [dependencies]
-# Core dependencies (always needed)
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-jsonschema = { version = "0.26", default-features = false }
-regex = "1.10"
-lazy_static = "1.5"
-image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
-rayon = "1.10"
-thiserror = "1.0"
-walkdir = "2.5"
-num_cpus = "1.16"
-
-# Conditional dependencies
-pyo3 = { version = "0.23", features = ["extension-module", "generate-import-lib"], optional = true }
-clap = { version = "4.5", features = ["derive"], optional = true }
+pyo3 = { version = "0.25", features = ["extension-module"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+jsonschema = "0.28"
+regex = "1"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+rayon = "1"
+walkdir = "2"
 
 [dev-dependencies]
-criterion = "0.5"
-tempfile = "3.10"
+tempfile = "3"
