@@ -1,0 +1,28 @@
+{
+  "name": "ofd-validator-darwin-x64",
+  "version": "0.3.0",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "main": "ofd-validator.darwin-x64.node",
+  "files": [
+    "ofd-validator.darwin-x64.node"
+  ],
+  "description": "High-performance validation library for the Open Filament Database",
+  "keywords": [
+    "validation",
+    "filament",
+    "3d-printing",
+    "database",
+    "rust",
+    "napi"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OpenFilamentCollective/ofd-validator"
+  }
+}

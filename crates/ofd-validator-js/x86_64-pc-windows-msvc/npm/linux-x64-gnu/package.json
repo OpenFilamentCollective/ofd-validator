@@ -1,0 +1,31 @@
+{
+  "name": "ofd-validator-linux-x64-gnu",
+  "version": "0.3.0",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "main": "ofd-validator.linux-x64-gnu.node",
+  "files": [
+    "ofd-validator.linux-x64-gnu.node"
+  ],
+  "description": "High-performance validation library for the Open Filament Database",
+  "keywords": [
+    "validation",
+    "filament",
+    "3d-printing",
+    "database",
+    "rust",
+    "napi"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OpenFilamentCollective/ofd-validator"
+  },
+  "libc": [
+    "glibc"
+  ]
+}

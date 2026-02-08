@@ -180,9 +180,22 @@ jobs:
         working-directory: crates/ofd-validator-js
         run: ls -lhR npm/ *.node 2>/dev/null || true
 
-      - name: Publish
+      - name: Publish platform packages
         working-directory: crates/ofd-validator-js
         run: |
-          npm publish --access public
+          for dir in npm/*/; do
+            if [ -f "$dir/package.json" ]; then
+              echo "Publishing $dir..."
+              cd "$dir"
+              npm publish --access public || echo "Platform package publish failed (may already exist)"
+              cd ../..
+            fi
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish main package
+        working-directory: crates/ofd-validator-js
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

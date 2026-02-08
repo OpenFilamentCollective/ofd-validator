@@ -26,9 +26,17 @@
     "triples": {
       "defaults": true,
       "additional": [
-        "aarch64-unknown-linux-gnu"
+        "aarch64-unknown-linux-gnu",
+        "aarch64-apple-darwin"
       ]
     }
+  },
+  "optionalDependencies": {
+    "ofd-validator-win32-x64-msvc": "0.3.0",
+    "ofd-validator-darwin-x64": "0.3.0",
+    "ofd-validator-darwin-arm64": "0.3.0",
+    "ofd-validator-linux-x64-gnu": "0.3.0",
+    "ofd-validator-linux-arm64-gnu": "0.3.0"
   },
   "devDependencies": {
     "@napi-rs/cli": "^2.18.0"

@@ -1,5 +1,10 @@
+.claude
+
 # Rust
 target
+
+# Node
+node_modules
 
 # Python
 __pycache__/
