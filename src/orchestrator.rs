@@ -281,11 +281,13 @@ pub fn validate_all(
         let mut result = ValidationResult::default();
 
         // 1. Missing files check
+        eprintln!("Checking for missing required files...");
         result.merge_from(&validate_required_files_impl(&data_dir, &stores_dir));
 
         // 2. JSON validation (parallel)
         let schema_cache = SchemaCache::new(&schemas_dir);
         let json_tasks = collect_json_tasks(&data_dir, &stores_dir);
+        eprintln!("Validating {} JSON files...", json_tasks.len());
         let json_results: Vec<ValidationResult> = json_tasks
             .par_iter()
             .map(|task| validate_json_file_impl(&task.path, &task.schema_name, &schema_cache))
@@ -296,6 +298,7 @@ pub fn validate_all(
 
         // 3. Logo validation (parallel)
         let logo_tasks = collect_logo_tasks(&data_dir, &stores_dir);
+        eprintln!("Validating {} logo files...", logo_tasks.len());
         let logo_results: Vec<ValidationResult> = logo_tasks
             .par_iter()
             .map(|task| validate_logo_file_impl(&task.path, task.logo_name.as_deref()))
@@ -306,6 +309,7 @@ pub fn validate_all(
 
         // 4. Folder name validation (parallel)
         let folder_tasks = collect_folder_tasks(&data_dir, &stores_dir);
+        eprintln!("Validating {} folder names...", folder_tasks.len());
         let folder_results: Vec<ValidationResult> = folder_tasks
             .par_iter()
             .map(|task| validate_folder_name_impl(&task.path, &task.json_file, &task.json_key))
@@ -315,9 +319,11 @@ pub fn validate_all(
         }
 
         // 5. Store ID validation
+        eprintln!("Validating store IDs...");
         result.merge_from(&validate_store_ids_impl(&data_dir, &stores_dir));
 
         // 6. GTIN/EAN validation
+        eprintln!("Validating GTIN/EAN codes...");
         result.merge_from(&validate_gtin_ean_impl(&data_dir));
 
         result
@@ -339,6 +345,7 @@ pub fn validate_json_files(
     py.allow_threads(|| {
         let schema_cache = SchemaCache::new(&schemas_dir);
         let tasks = collect_json_tasks(&data_dir, &stores_dir);
+        eprintln!("Validating {} JSON files...", tasks.len());
         let results: Vec<ValidationResult> = tasks
             .par_iter()
             .map(|task| validate_json_file_impl(&task.path, &task.schema_name, &schema_cache))
@@ -364,6 +371,7 @@ pub fn validate_logo_files(
 
     py.allow_threads(|| {
         let tasks = collect_logo_tasks(&data_dir, &stores_dir);
+        eprintln!("Validating {} logo files...", tasks.len());
         let results: Vec<ValidationResult> = tasks
             .par_iter()
             .map(|task| validate_logo_file_impl(&task.path, task.logo_name.as_deref()))
@@ -389,6 +397,7 @@ pub fn validate_folder_names(
 
     py.allow_threads(|| {
         let tasks = collect_folder_tasks(&data_dir, &stores_dir);
+        eprintln!("Validating {} folder names...", tasks.len());
         let results: Vec<ValidationResult> = tasks
             .par_iter()
             .map(|task| validate_folder_name_impl(&task.path, &task.json_file, &task.json_key))
