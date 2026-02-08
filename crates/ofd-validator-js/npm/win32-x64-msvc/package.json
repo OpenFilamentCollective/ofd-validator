@@ -1,5 +1,5 @@
 {
-  "name": "ofd-validator-win32-x64-msvc",
+  "name": "@openfilamentcollective/ofd-validator-win32-x64-msvc",
   "version": "0.3.0",
   "os": [
     "win32"
@@ -21,6 +21,9 @@
     "napi"
   ],
   "license": "MIT",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/OpenFilamentCollective/ofd-validator"

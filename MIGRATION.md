@@ -51,10 +51,18 @@ maturin build --release     # still works
 
 ## New: JavaScript / Node.js Support
 
-Starting with this version, the validation library is also available as an npm package:
+Starting with this version, the validation library is also available as an npm package via [GitHub Packages](https://github.com/OpenFilamentCollective/ofd-validator/packages).
+
+Add a `.npmrc` in your project root:
+
+```
+@openfilamentcollective:registry=https://npm.pkg.github.com
+```
+
+Then install:
 
 ```bash
-npm install ofd-validator
+npm install @openfilamentcollective/ofd-validator
 ```
 
 The JS binding offers the same path-mode API as Python, plus a **content mode** that accepts file contents directly (strings and Buffers) without reading from disk. See [docs/js-api.md](docs/js-api.md) for full documentation.

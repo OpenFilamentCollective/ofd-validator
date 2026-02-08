@@ -24,8 +24,16 @@ Requires Python 3.10+. No additional Python dependencies needed (self-contained 
 
 ### Node.js
 
+Published to [GitHub Packages](https://github.com/OpenFilamentCollective/ofd-validator/packages). Add a `.npmrc` in your project root:
+
+```
+@openfilamentcollective:registry=https://npm.pkg.github.com
+```
+
+Then install:
+
 ```bash
-npm install ofd-validator
+npm install @openfilamentcollective/ofd-validator
 ```
 
 Prebuilt binaries included for Linux (x64, arm64), macOS (x64, arm64), and Windows (x64).
@@ -105,7 +113,7 @@ for error in result.errors:
 ### Path mode (filesystem-based)
 
 ```javascript
-const { validateAll, validateJsonFiles } = require('ofd-validator');
+const { validateAll, validateJsonFiles } = require('@openfilamentcollective/ofd-validator');
 
 const result = validateAll('./data', './stores', './schemas');
 console.log(result.isValid);      // boolean
@@ -121,7 +129,7 @@ for (const err of result.errors) {
 Pass file contents directly as strings or Buffers. Useful for CI pipelines, API-fetched data, or server-side validation.
 
 ```javascript
-const { validateJsonContent, validateAllContent } = require('ofd-validator');
+const { validateJsonContent, validateAllContent } = require('@openfilamentcollective/ofd-validator');
 const fs = require('fs');
 
 // Single JSON validation
@@ -217,6 +225,6 @@ MIT
 ## Links
 
 - [PyPI](https://pypi.org/project/ofd-validator/)
-- [npm](https://www.npmjs.com/package/ofd-validator)
+- [npm (GitHub Packages)](https://github.com/OpenFilamentCollective/ofd-validator/packages)
 - [Repository](https://github.com/OpenFilamentCollective/ofd-validator)
 - [Open Filament Database](https://github.com/OpenFilamentCollective/open-filament-database)

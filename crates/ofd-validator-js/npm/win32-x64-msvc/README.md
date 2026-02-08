@@ -1,3 +1,3 @@
-# `ofd-validator-win32-x64-msvc`
+# `@openfilamentcollective/ofd-validator-win32-x64-msvc`
 
-This is the **x86_64-pc-windows-msvc** binary for `ofd-validator`
+This is the **x86_64-pc-windows-msvc** binary for `@openfilamentcollective/ofd-validator`

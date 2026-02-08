@@ -1,5 +1,5 @@
 {
-  "name": "ofd-validator-linux-x64-gnu",
+  "name": "@openfilamentcollective/ofd-validator-linux-x64-gnu",
   "version": "0.3.0",
   "os": [
     "linux"
@@ -21,6 +21,9 @@
     "napi"
   ],
   "license": "MIT",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/OpenFilamentCollective/ofd-validator"

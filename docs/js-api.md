@@ -2,8 +2,16 @@
 
 ## Installation
 
+Published to [GitHub Packages](https://github.com/OpenFilamentCollective/ofd-validator/packages). Add a `.npmrc` in your project root:
+
+```
+@openfilamentcollective:registry=https://npm.pkg.github.com
+```
+
+Then install:
+
 ```bash
-npm install ofd-validator
+npm install @openfilamentcollective/ofd-validator
 ```
 
 Prebuilt native binaries are included for:
@@ -24,7 +32,7 @@ Path mode mirrors the Python API — pass directory paths and the library reads 
 Run all validations (JSON schemas, logos, folder names, store IDs, GTIN/EAN, required files).
 
 ```javascript
-const { validateAll } = require('ofd-validator');
+const { validateAll } = require('@openfilamentcollective/ofd-validator');
 
 const result = validateAll('./data', './stores', './schemas');
 console.log(result.isValid);      // boolean
@@ -47,7 +55,7 @@ const {
   validateRequiredFiles,
   validateLogoFile,
   validateFolderName,
-} = require('ofd-validator');
+} = require('@openfilamentcollective/ofd-validator');
 
 // Batch validators
 const jsonResult = validateJsonFiles('./data', './stores', './schemas');
@@ -76,7 +84,7 @@ The optional `filePath` parameter in content-mode functions is **only used for e
 Validate a JSON string against a named schema.
 
 ```javascript
-const { validateJsonContent } = require('ofd-validator');
+const { validateJsonContent } = require('@openfilamentcollective/ofd-validator');
 const fs = require('fs');
 
 const schemas = {
@@ -93,7 +101,7 @@ const result = validateJsonContent(brandJson, 'brand', schemas, 'data/BrandX/bra
 Validate a logo from raw bytes.
 
 ```javascript
-const { validateLogoContent } = require('ofd-validator');
+const { validateLogoContent } = require('@openfilamentcollective/ofd-validator');
 
 const logoBytes = fs.readFileSync('data/BrandX/logo.png');
 const result = validateLogoContent(logoBytes, 'logo.png', 'logo.png', 'data/BrandX/logo.png');
@@ -104,7 +112,7 @@ const result = validateLogoContent(logoBytes, 'logo.png', 'logo.png', 'data/Bran
 Validate that a folder name matches a JSON field value.
 
 ```javascript
-const { validateFolderNameContent } = require('ofd-validator');
+const { validateFolderNameContent } = require('@openfilamentcollective/ofd-validator');
 
 const result = validateFolderNameContent(
   'BrandX',                              // actual folder name
@@ -119,7 +127,7 @@ const result = validateFolderNameContent(
 Validate GTIN/EAN fields from parsed sizes data.
 
 ```javascript
-const { validateGtinEanContent } = require('ofd-validator');
+const { validateGtinEanContent } = require('@openfilamentcollective/ofd-validator');
 
 const result = validateGtinEanContent([
   { path: 'data/BrandX/PLA/Red/Standard/sizes.json', content: '[{"size": "1kg", "gtin": "1234567890123"}]' },
@@ -131,7 +139,7 @@ const result = validateGtinEanContent([
 Validate that store IDs referenced in sizes data exist.
 
 ```javascript
-const { validateStoreIdsContent } = require('ofd-validator');
+const { validateStoreIdsContent } = require('@openfilamentcollective/ofd-validator');
 
 const result = validateStoreIdsContent(
   ['amazon', 'printables-store'],  // known valid store IDs
@@ -146,7 +154,7 @@ const result = validateStoreIdsContent(
 Batch-validate everything from in-memory data.
 
 ```javascript
-const { validateAllContent } = require('ofd-validator');
+const { validateAllContent } = require('@openfilamentcollective/ofd-validator');
 
 const result = validateAllContent({
   jsonFiles: [

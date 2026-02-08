@@ -1,3 +1,3 @@
-# `ofd-validator-darwin-x64`
+# `@openfilamentcollective/ofd-validator-darwin-x64`
 
-This is the **x86_64-apple-darwin** binary for `ofd-validator`
+This is the **x86_64-apple-darwin** binary for `@openfilamentcollective/ofd-validator`
