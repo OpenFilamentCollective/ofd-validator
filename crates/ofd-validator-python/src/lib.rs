@@ -1,7 +1,6 @@
 use pyo3::prelude::*;
 
 mod orchestrator;
-mod schema_cache;
 mod types;
 mod util;
 mod validators;

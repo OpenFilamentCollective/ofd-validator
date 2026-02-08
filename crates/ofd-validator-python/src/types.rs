@@ -1,11 +1,22 @@
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
+use ofd_validator_core as core;
+
 #[pyclass(eq, eq_int)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum ValidationLevel {
     Error,
     Warning,
+}
+
+impl From<core::ValidationLevel> for ValidationLevel {
+    fn from(level: core::ValidationLevel) -> Self {
+        match level {
+            core::ValidationLevel::Error => ValidationLevel::Error,
+            core::ValidationLevel::Warning => ValidationLevel::Warning,
+        }
+    }
 }
 
 impl std::fmt::Display for ValidationLevel {
@@ -52,22 +63,13 @@ pub struct ValidationError {
     pub path: Option<String>,
 }
 
-impl ValidationError {
-    pub fn error(category: impl Into<String>, message: impl Into<String>, path: Option<String>) -> Self {
+impl From<core::ValidationError> for ValidationError {
+    fn from(e: core::ValidationError) -> Self {
         Self {
-            level: ValidationLevel::Error,
-            category: category.into(),
-            message: message.into(),
-            path,
-        }
-    }
-
-    pub fn warning(category: impl Into<String>, message: impl Into<String>, path: Option<String>) -> Self {
-        Self {
-            level: ValidationLevel::Warning,
-            category: category.into(),
-            message: message.into(),
-            path,
+            level: e.level.into(),
+            category: e.category,
+            message: e.message,
+            path: e.path,
         }
     }
 }
@@ -108,25 +110,25 @@ pub struct ValidationResult {
     pub errors: Vec<ValidationError>,
 }
 
+impl From<core::ValidationResult> for ValidationResult {
+    fn from(r: core::ValidationResult) -> Self {
+        Self {
+            errors: r.errors.into_iter().map(|e| e.into()).collect(),
+        }
+    }
+}
+
 impl ValidationResult {
-    pub fn add(&mut self, error: ValidationError) {
-        self.errors.push(error);
-    }
-
-    pub fn merge_from(&mut self, other: &ValidationResult) {
-        self.errors.extend(other.errors.iter().cloned());
-    }
-
-    pub fn is_valid_check(&self) -> bool {
-        !self.errors.iter().any(|e| e.level == ValidationLevel::Error)
-    }
-
     pub fn count_errors(&self) -> usize {
         self.errors.iter().filter(|e| e.level == ValidationLevel::Error).count()
     }
 
     pub fn count_warnings(&self) -> usize {
         self.errors.iter().filter(|e| e.level == ValidationLevel::Warning).count()
+    }
+
+    pub fn is_valid_check(&self) -> bool {
+        !self.errors.iter().any(|e| e.level == ValidationLevel::Error)
     }
 }
 
@@ -138,11 +140,11 @@ impl ValidationResult {
     }
 
     fn add_error(&mut self, error: ValidationError) {
-        self.add(error);
+        self.errors.push(error);
     }
 
     fn merge(&mut self, other: &ValidationResult) {
-        self.merge_from(other);
+        self.errors.extend(other.errors.iter().cloned());
     }
 
     #[getter]

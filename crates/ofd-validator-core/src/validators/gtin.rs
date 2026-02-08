@@ -1,34 +1,22 @@
-use std::path::Path;
 use regex::Regex;
+use serde_json::Value;
 use std::sync::LazyLock;
-use walkdir::WalkDir;
 
 use crate::types::{ValidationError, ValidationResult};
-use crate::util::load_json;
 
 static GTIN_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[0-9]{12,13}$").unwrap());
 static EAN_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[0-9]{13}$").unwrap());
 
-pub fn validate_gtin_ean_impl(data_dir: &Path) -> ValidationResult {
+/// Validate GTIN/EAN fields in pre-loaded sizes.json entries.
+/// Each entry is (path_label, parsed sizes.json Value).
+pub fn validate_gtin_ean(sizes_entries: &[(&str, &Value)]) -> ValidationResult {
     let mut result = ValidationResult::default();
 
-    for entry in WalkDir::new(data_dir).into_iter().filter_map(|e| e.ok()) {
-        if entry.file_name() != "sizes.json" {
-            continue;
-        }
-
-        let sizes_file = entry.path();
-        let sizes_data = match load_json(sizes_file) {
-            Some(v) => v,
-            None => continue,
-        };
-
+    for (path_str, sizes_data) in sizes_entries {
         let sizes_arr = match sizes_data.as_array() {
             Some(a) => a,
             None => continue,
         };
-
-        let path_str = sizes_file.to_string_lossy().to_string();
 
         for (idx, size) in sizes_arr.iter().enumerate() {
             let gtin = size.get("gtin").and_then(|v| v.as_str());
@@ -39,7 +27,7 @@ pub fn validate_gtin_ean_impl(data_dir: &Path) -> ValidationResult {
                     result.add(ValidationError::error(
                         "GTIN",
                         format!("Invalid gtin at $[{}]: must be 12 or 13 digits", idx),
-                        Some(path_str.clone()),
+                        Some(path_str.to_string()),
                     ));
                 }
             }
@@ -49,7 +37,7 @@ pub fn validate_gtin_ean_impl(data_dir: &Path) -> ValidationResult {
                     result.add(ValidationError::error(
                         "EAN",
                         format!("Invalid ean at $[{}]: must be exactly 13 digits", idx),
-                        Some(path_str.clone()),
+                        Some(path_str.to_string()),
                     ));
                 }
             }
@@ -63,7 +51,7 @@ pub fn validate_gtin_ean_impl(data_dir: &Path) -> ValidationResult {
                             "Mismatch at $[{}]: gtin and ean are both 13 digits but not equal",
                             idx
                         ),
-                        Some(path_str.clone()),
+                        Some(path_str.to_string()),
                     ));
                 }
             }

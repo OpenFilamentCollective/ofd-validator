@@ -1,11 +1,8 @@
-use std::path::Path;
-
 use jsonschema::Retrieve;
 use serde_json::Value;
 
 use crate::schema_cache::SchemaCache;
 use crate::types::{ValidationError, ValidationResult};
-use crate::util::load_json;
 
 /// Custom retriever for resolving $ref URIs against our schema cache.
 struct SchemaRetriever {
@@ -19,15 +16,12 @@ impl Retrieve for SchemaRetriever {
     ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
         let uri_str = uri.as_str();
 
-        // Strip fragment (e.g. "#/definitions/...") — jsonschema handles fragments internally
         let base_uri = uri_str.split('#').next().unwrap_or(uri_str);
 
         if base_uri.is_empty() {
             return Err(format!("Empty URI after stripping fragment: {}", uri_str).into());
         }
 
-        // The jsonschema crate resolves relative $ref like "./foo.json" into
-        // "json-schema:///foo.json". Strip that prefix to match our cache keys.
         let lookup_key = base_uri
             .strip_prefix("json-schema:///")
             .or_else(|| base_uri.strip_prefix("json-schema://"))
@@ -39,41 +33,28 @@ impl Retrieve for SchemaRetriever {
     }
 }
 
-pub fn validate_json_file_impl(
-    json_path: &Path,
+/// Validate parsed JSON data against a named schema.
+pub fn validate_json(
+    data: &Value,
     schema_name: &str,
     schema_cache: &SchemaCache,
+    path_label: Option<&str>,
 ) -> ValidationResult {
     let mut result = ValidationResult::default();
-    let path_str = json_path.to_string_lossy().to_string();
+    let path_str = path_label.map(|s| s.to_string());
 
-    // Load the JSON data
-    let data = match load_json(json_path) {
-        Some(v) => v,
-        None => {
-            result.add(ValidationError::error(
-                "JSON",
-                "Failed to load JSON file",
-                Some(path_str),
-            ));
-            return result;
-        }
-    };
-
-    // Get the schema
     let schema = match schema_cache.get(schema_name) {
         Some(s) => s,
         None => {
             result.add(ValidationError::error(
                 "JSON",
                 format!("Schema '{}' not found", schema_name),
-                Some(path_str),
+                path_str,
             ));
             return result;
         }
     };
 
-    // Build validator with custom retriever for $ref resolution
     let retriever = SchemaRetriever {
         cache: schema_cache.clone(),
     };
@@ -87,14 +68,13 @@ pub fn validate_json_file_impl(
             result.add(ValidationError::error(
                 "JSON",
                 format!("Schema compilation error: {}", e),
-                Some(path_str),
+                path_str,
             ));
             return result;
         }
     };
 
-    // Validate — collect all errors using iter_errors
-    for error in validator.iter_errors(&data) {
+    for error in validator.iter_errors(data) {
         let json_path_str = format!("{}", error.instance_path);
         result.add(ValidationError::error(
             "JSON",
@@ -102,7 +82,7 @@ pub fn validate_json_file_impl(
                 "Schema validation failed: {} at {}",
                 error, json_path_str
             ),
-            Some(path_str.clone()),
+            path_str.clone(),
         ));
     }
 

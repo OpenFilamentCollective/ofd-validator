@@ -1,6 +1,6 @@
 # OFD Validator
 
-High-performance validation library for the [Open Filament Database](https://github.com/OpenFilamentCollective/open-filament-database), written in Rust with Python bindings via [PyO3](https://pyo3.rs/).
+High-performance validation library for the [Open Filament Database](https://github.com/OpenFilamentCollective/open-filament-database), written in Rust with Python and Node.js bindings.
 
 ## Features
 
@@ -14,13 +14,23 @@ High-performance validation library for the [Open Filament Database](https://git
 
 ## Installation
 
+### Python
+
 ```bash
 pip install ofd-validator
 ```
 
 Requires Python 3.10+. No additional Python dependencies needed (self-contained compiled extension).
 
-## Usage
+### Node.js
+
+```bash
+npm install ofd-validator
+```
+
+Prebuilt binaries included for Linux (x64, arm64), macOS (x64, arm64), and Windows (x64).
+
+## Python Usage
 
 ### Functions
 
@@ -90,53 +100,114 @@ for error in result.errors:
     error.path      # Optional file path (str or None)
 ```
 
+## Node.js Usage
+
+### Path mode (filesystem-based)
+
+```javascript
+const { validateAll, validateJsonFiles } = require('ofd-validator');
+
+const result = validateAll('./data', './stores', './schemas');
+console.log(result.isValid);      // boolean
+console.log(result.errorCount);   // number
+console.log(result.warningCount); // number
+for (const err of result.errors) {
+  console.log(`${err.level} [${err.category}]: ${err.message} (${err.path})`);
+}
+```
+
+### Content mode (in-memory, no filesystem access)
+
+Pass file contents directly as strings or Buffers. Useful for CI pipelines, API-fetched data, or server-side validation.
+
+```javascript
+const { validateJsonContent, validateAllContent } = require('ofd-validator');
+const fs = require('fs');
+
+// Single JSON validation
+const schemas = {
+  brand: fs.readFileSync('schemas/brand_schema.json', 'utf-8'),
+};
+const result = validateJsonContent(
+  '{"id": "BrandX", "name": "Brand X", "logo": "logo.png"}',
+  'brand',
+  schemas,
+  'data/BrandX/brand.json'  // optional label for error messages
+);
+
+// Batch validation from in-memory data
+const fullResult = validateAllContent({
+  jsonFiles: [
+    { path: 'brand.json', schemaName: 'brand', content: '{"id":"BrandX"}' },
+  ],
+  logoFiles: [
+    { path: 'logo.png', filename: 'logo.png', content: fs.readFileSync('logo.png') },
+  ],
+  folders: [
+    { path: 'data/BrandX', folderName: 'BrandX', jsonContent: '{"id":"BrandX"}', jsonKey: 'id' },
+  ],
+  storeIds: ['amazon'],
+  schemas: schemas,
+});
+```
+
+For the full JS API reference, see [docs/js-api.md](docs/js-api.md).
+
 ## Development
 
 ### Prerequisites
 
 - Rust (stable)
-- Python 3.10+
-- [maturin](https://github.com/PyO3/maturin) (`pip install maturin`)
+- Python 3.10+ and [maturin](https://github.com/PyO3/maturin) (for Python bindings)
+- Node.js 18+ (for JS bindings)
 
 ### Building
 
 ```bash
-# Build and install into current Python env (debug)
-maturin develop
-
-# Build optimized release wheel
+# Python: build and install into current env
 maturin develop --release
 
-# Build wheel for distribution
-maturin build --release
+# JS: build native addon
+cd crates/ofd-validator-js && npm install && npm run build
+
+# Check all crates
+cargo check --workspace
 ```
 
 ### Testing
 
 ```bash
-cargo test
+cargo test --workspace
 ```
 
 ### Project structure
 
 ```
 ofd-validator/
-├── Cargo.toml                        # Rust package config
-├── pyproject.toml                    # Python package config (maturin)
-└── src/
-    ├── lib.rs                        # PyO3 module definition
-    ├── types.rs                      # ValidationLevel, ValidationError, ValidationResult
-    ├── schema_cache.rs               # Compiled JSON schema cache
-    ├── util.rs                       # Shared helpers (logging, constants, JSON loading)
-    ├── orchestrator.rs               # Batch validators with parallel task collection
-    └── validators/
-        ├── mod.rs                    # Individual pyfunction wrappers
-        ├── json_validator.rs         # JSON schema validation
-        ├── logo_validator.rs         # Logo file validation (PNG, JPEG, SVG)
-        ├── folder_name.rs            # Folder name vs JSON content check
-        ├── store_id.rs               # Store ID cross-reference check
-        ├── gtin.rs                   # GTIN/EAN barcode validation
-        └── missing_files.rs          # Required file existence check
+├── Cargo.toml                            # Workspace definition
+├── pyproject.toml                        # Python package config (maturin)
+├── crates/
+│   ├── ofd-validator-core/               # Pure Rust validation library (no FFI)
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       ├── types.rs                  # ValidationLevel, ValidationError, ValidationResult
+│   │       ├── schema_cache.rs           # Compiled JSON schema cache
+│   │       ├── util.rs                   # Constants, helpers
+│   │       ├── orchestrator.rs           # DataSet + parallel batch validation
+│   │       └── validators/               # Individual validator implementations
+│   ├── ofd-validator-python/             # PyO3 bindings
+│   │   └── src/
+│   │       ├── lib.rs                    # #[pymodule] definition
+│   │       ├── types.rs                  # PyO3 wrapper types
+│   │       ├── orchestrator.rs           # Python batch validators
+│   │       └── validators.rs             # Python individual validators
+│   └── ofd-validator-js/                 # napi-rs bindings
+│       ├── src/lib.rs                    # #[napi] exports (path mode + content mode)
+│       ├── package.json                  # npm package config
+│       └── build.rs                      # napi-build
+├── docs/
+│   └── js-api.md                         # Full JS API reference
+└── MIGRATION.md                          # Migration guide for dependents
 ```
 
 ## License
@@ -146,5 +217,6 @@ MIT
 ## Links
 
 - [PyPI](https://pypi.org/project/ofd-validator/)
+- [npm](https://www.npmjs.com/package/ofd-validator)
 - [Repository](https://github.com/OpenFilamentCollective/ofd-validator)
 - [Open Filament Database](https://github.com/OpenFilamentCollective/open-filament-database)

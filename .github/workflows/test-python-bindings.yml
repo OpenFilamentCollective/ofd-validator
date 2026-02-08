@@ -3,14 +3,14 @@ name: Test Python Bindings
 on:
   pull_request:
     paths:
-      - 'src/**'
+      - 'crates/**'
       - 'Cargo.toml'
       - 'pyproject.toml'
       - '.github/workflows/test-python-bindings.yml'
   push:
     branches: [main]
     paths:
-      - 'src/**'
+      - 'crates/**'
       - 'Cargo.toml'
       - 'pyproject.toml'
   workflow_dispatch:

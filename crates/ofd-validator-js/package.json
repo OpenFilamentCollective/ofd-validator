@@ -1,0 +1,41 @@
+{
+  "name": "ofd-validator",
+  "version": "0.2.1",
+  "description": "High-performance validation library for the Open Filament Database",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OpenFilamentCollective/ofd-validator"
+  },
+  "license": "MIT",
+  "keywords": [
+    "validation",
+    "filament",
+    "3d-printing",
+    "database",
+    "rust",
+    "napi"
+  ],
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
+  "napi": {
+    "name": "ofd-validator",
+    "triples": {
+      "defaults": true,
+      "additional": [
+        "aarch64-unknown-linux-gnu"
+      ]
+    }
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^2.18.0"
+  },
+  "scripts": {
+    "build": "napi build --release --platform",
+    "prepublishOnly": "napi prepublish --skip-gh-release",
+    "artifacts": "napi artifacts"
+  }
+}

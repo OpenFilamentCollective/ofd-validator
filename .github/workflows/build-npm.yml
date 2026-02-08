@@ -1,0 +1,164 @@
+name: Build and Publish npm
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      publish-to-npm:
+        description: 'Publish to npm (true/false)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: x86_64-apple-darwin
+            os: macos-latest
+          - target: aarch64-apple-darwin
+            os: macos-latest
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          target: ${{ matrix.target }}
+
+      - name: Install dependencies
+        working-directory: crates/ofd-validator-js
+        run: npm install
+
+      - name: Install cross-compilation tools
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Build native addon
+        working-directory: crates/ofd-validator-js
+        run: npx napi build --release --platform --target ${{ matrix.target }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binding-${{ matrix.target }}
+          path: crates/ofd-validator-js/*.node
+          retention-days: 7
+
+  test:
+    name: Test (${{ matrix.os }})
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: binding-*
+          merge-multiple: true
+          path: crates/ofd-validator-js
+
+      - name: Install dependencies
+        working-directory: crates/ofd-validator-js
+        run: npm install
+
+      - name: Smoke test
+        working-directory: crates/ofd-validator-js
+        shell: bash
+        run: |
+          node -e "
+          const v = require('./index');
+          console.log('Available exports:', Object.keys(v));
+
+          // Test that all path-mode functions exist
+          console.assert(typeof v.validateAll === 'function', 'validateAll missing');
+          console.assert(typeof v.validateJsonFiles === 'function', 'validateJsonFiles missing');
+          console.assert(typeof v.validateLogoFiles === 'function', 'validateLogoFiles missing');
+          console.assert(typeof v.validateFolderNames === 'function', 'validateFolderNames missing');
+          console.assert(typeof v.validateStoreIds === 'function', 'validateStoreIds missing');
+          console.assert(typeof v.validateGtinEan === 'function', 'validateGtinEan missing');
+          console.assert(typeof v.validateRequiredFiles === 'function', 'validateRequiredFiles missing');
+          console.assert(typeof v.validateLogoFile === 'function', 'validateLogoFile missing');
+          console.assert(typeof v.validateFolderName === 'function', 'validateFolderName missing');
+
+          // Test that all content-mode functions exist
+          console.assert(typeof v.validateJsonContent === 'function', 'validateJsonContent missing');
+          console.assert(typeof v.validateLogoContent === 'function', 'validateLogoContent missing');
+          console.assert(typeof v.validateFolderNameContent === 'function', 'validateFolderNameContent missing');
+          console.assert(typeof v.validateGtinEanContent === 'function', 'validateGtinEanContent missing');
+          console.assert(typeof v.validateStoreIdsContent === 'function', 'validateStoreIdsContent missing');
+          console.assert(typeof v.validateAllContent === 'function', 'validateAllContent missing');
+
+          console.log('All smoke tests passed');
+          "
+
+  publish:
+    name: Publish to npm
+    needs: test
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.publish-to-npm == 'true')
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: binding-*
+          merge-multiple: true
+          path: crates/ofd-validator-js
+
+      - name: Install dependencies
+        working-directory: crates/ofd-validator-js
+        run: npm install
+
+      - name: Prepare platform packages
+        working-directory: crates/ofd-validator-js
+        run: npx napi prepublish --skip-gh-release
+
+      - name: List packages
+        working-directory: crates/ofd-validator-js
+        run: ls -lhR npm/ *.node 2>/dev/null || true
+
+      - name: Publish
+        working-directory: crates/ofd-validator-js
+        run: |
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

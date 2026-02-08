@@ -36,6 +36,7 @@ Repository = "https://github.com/OpenFilamentCollective/ofd-validator"
 Issues = "https://github.com/OpenFilamentCollective/ofd-validator/issues"
 
 [tool.maturin]
+manifest-path = "crates/ofd-validator-python/Cargo.toml"
 features = ["pyo3/extension-module"]
 module-name = "ofd_validator"
 strip = true
