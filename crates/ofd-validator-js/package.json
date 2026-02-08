@@ -1,6 +1,6 @@
 {
   "name": "ofd-validator",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "High-performance validation library for the Open Filament Database",
   "main": "index.js",
   "types": "index.d.ts",
