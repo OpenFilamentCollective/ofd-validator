@@ -1,4 +1,6 @@
 use std::collections::HashSet;
+use std::path::Path;
+use serde::Deserialize;
 use serde_json::Value;
 use rayon::prelude::*;
 
@@ -24,6 +26,220 @@ pub struct DataSet {
     pub file_manifest: FileManifest,
     /// Compiled schema cache
     pub schema_cache: SchemaCache,
+}
+
+// --- Types for applying pending changes from the WebUI ---
+
+#[derive(Deserialize)]
+struct ChangesPayload {
+    changes: Vec<ChangeEntry>,
+}
+
+#[derive(Deserialize)]
+struct ChangeEntry {
+    entity: EntityRef,
+    operation: String,
+    data: Option<Value>,
+}
+
+#[derive(Deserialize)]
+struct EntityRef {
+    path: String,
+    #[serde(rename = "type")]
+    entity_type: String,
+}
+
+/// Internal fields added by the WebUI that should be stripped before validation.
+const STRIP_FIELDS: &[&str] = &[
+    "brandId", "brand_id", "materialType", "filamentDir", "filament_id", "slug",
+];
+
+/// Info needed to overlay a change onto the DataSet.
+struct EntityFsInfo {
+    json_path: String,
+    folder_path: String,
+    folder_name: String,
+    schema_name: String,
+    folder_json_key: String,
+}
+
+/// Map a WebUI entity path to filesystem paths and metadata.
+fn entity_path_to_fs_info(
+    entity_path: &str,
+    entity_type: &str,
+    data_dir: &Path,
+    stores_dir: &Path,
+) -> Option<EntityFsInfo> {
+    let parts: Vec<&str> = entity_path.split('/').collect();
+
+    let (json_path, folder_path, folder_name, folder_json_key) = match parts.as_slice() {
+        ["stores", slug] => (
+            stores_dir.join(slug).join("store.json"),
+            stores_dir.join(slug),
+            slug.to_string(),
+            "id".to_string(),
+        ),
+        ["brands", slug] => (
+            data_dir.join(slug).join("brand.json"),
+            data_dir.join(slug),
+            slug.to_string(),
+            "id".to_string(),
+        ),
+        ["brands", slug, "materials", mat_type] => (
+            data_dir.join(slug).join(mat_type).join("material.json"),
+            data_dir.join(slug).join(mat_type),
+            mat_type.to_string(),
+            "material".to_string(),
+        ),
+        ["brands", slug, "materials", mat_type, "filaments", name] => (
+            data_dir.join(slug).join(mat_type).join(name).join("filament.json"),
+            data_dir.join(slug).join(mat_type).join(name),
+            name.to_string(),
+            "id".to_string(),
+        ),
+        ["brands", slug, "materials", mat_type, "filaments", name, "variants", variant] => (
+            data_dir.join(slug).join(mat_type).join(name).join(variant).join("variant.json"),
+            data_dir.join(slug).join(mat_type).join(name).join(variant),
+            variant.to_string(),
+            "id".to_string(),
+        ),
+        _ => return None,
+    };
+
+    Some(EntityFsInfo {
+        json_path: json_path.to_string_lossy().to_string(),
+        folder_path: folder_path.to_string_lossy().to_string(),
+        folder_name,
+        schema_name: entity_type.to_string(),
+        folder_json_key,
+    })
+}
+
+/// Strip internal WebUI tracking fields and empty strings from entity data.
+fn clean_change_data(data: &Value) -> Value {
+    if let Value::Object(map) = data {
+        let mut clean = serde_json::Map::new();
+        for (key, value) in map {
+            if STRIP_FIELDS.contains(&key.as_str()) {
+                continue;
+            }
+            if value == &Value::String(String::new()) {
+                continue;
+            }
+            clean.insert(key.clone(), value.clone());
+        }
+        Value::Object(clean)
+    } else {
+        data.clone()
+    }
+}
+
+impl DataSet {
+    /// Apply pending changes from the WebUI onto the in-memory dataset.
+    ///
+    /// `changes_json` should be a JSON string with the format:
+    /// `{ "changes": [{ "entity": { "path": "...", "type": "..." }, "operation": "create"|"update"|"delete", "data": {...} }] }`
+    pub fn apply_changes(&mut self, changes_json: &str, data_dir: &Path, stores_dir: &Path) {
+        let payload: ChangesPayload = match serde_json::from_str(changes_json) {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("Warning: failed to parse changes JSON: {}", e);
+                return;
+            }
+        };
+
+        for change in &payload.changes {
+            let info = match entity_path_to_fs_info(
+                &change.entity.path,
+                &change.entity.entity_type,
+                data_dir,
+                stores_dir,
+            ) {
+                Some(i) => i,
+                None => continue,
+            };
+
+            match change.operation.as_str() {
+                "create" | "update" => {
+                    let data = match &change.data {
+                        Some(d) => clean_change_data(d),
+                        None => continue,
+                    };
+
+                    // Update or add json_entries
+                    if let Some(existing) = self.json_entries.iter_mut().find(|(p, _, _)| *p == info.json_path) {
+                        existing.2 = data.clone();
+                    } else {
+                        self.json_entries.push((
+                            info.json_path.clone(),
+                            info.schema_name.clone(),
+                            data.clone(),
+                        ));
+                    }
+
+                    // Update or add folder_entries
+                    if let Some(existing) = self.folder_entries.iter_mut().find(|(p, _, _, _)| *p == info.folder_path) {
+                        existing.2 = data.clone();
+                    } else {
+                        self.folder_entries.push((
+                            info.folder_path.clone(),
+                            info.folder_name.clone(),
+                            data.clone(),
+                            info.folder_json_key.clone(),
+                        ));
+                    }
+
+                    // For stores: update valid_store_ids
+                    if info.schema_name == "store" {
+                        if let Some(id) = data.get("id").and_then(|v| v.as_str()) {
+                            self.valid_store_ids.insert(id.to_string());
+                        }
+                    }
+
+                    // For variants with sizes: update sizes_entries
+                    if info.schema_name == "variant" {
+                        if let Some(sizes) = data.get("sizes") {
+                            let sizes_path = Path::new(&info.folder_path)
+                                .join("sizes.json")
+                                .to_string_lossy()
+                                .to_string();
+                            if let Some(existing) = self.sizes_entries.iter_mut().find(|(p, _)| *p == sizes_path) {
+                                existing.1 = sizes.clone();
+                            } else {
+                                self.sizes_entries.push((sizes_path, sizes.clone()));
+                            }
+                        }
+                    }
+                }
+                "delete" => {
+                    // Remove from json_entries
+                    self.json_entries.retain(|(p, _, _)| *p != info.json_path);
+                    // Remove from folder_entries
+                    self.folder_entries.retain(|(p, _, _, _)| *p != info.folder_path);
+                    // Remove logo entries for this folder
+                    self.logo_entries.retain(|(p, _, _, _)| !p.starts_with(&info.folder_path));
+                    // Remove sizes entries under this folder
+                    self.sizes_entries.retain(|(p, _)| !p.starts_with(&info.folder_path));
+
+                    // For stores: remove from valid_store_ids
+                    if info.schema_name == "store" {
+                        // Extract the ID from the path (last component)
+                        if let Some(slug) = change.entity.path.split('/').last() {
+                            self.valid_store_ids.remove(slug);
+                        }
+                    }
+
+                    // Also remove any child entries (e.g., deleting a brand removes its materials/filaments/variants)
+                    let prefix = format!("{}/", info.folder_path);
+                    self.json_entries.retain(|(p, _, _)| !p.starts_with(&prefix));
+                    self.folder_entries.retain(|(p, _, _, _)| !p.starts_with(&prefix));
+                    self.logo_entries.retain(|(p, _, _, _)| !p.starts_with(&prefix));
+                    self.sizes_entries.retain(|(p, _)| !p.starts_with(&prefix));
+                }
+                _ => {}
+            }
+        }
+    }
 }
 
 #[cfg(feature = "filesystem")]

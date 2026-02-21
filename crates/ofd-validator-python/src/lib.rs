@@ -6,7 +6,8 @@ mod util;
 mod validators;
 
 use orchestrator::{
-    validate_all, validate_folder_names, validate_json_files, validate_logo_files,
+    validate_all, validate_all_with_changes, validate_folder_names, validate_json_files,
+    validate_logo_files,
 };
 use types::{ValidationError, ValidationLevel, ValidationResult};
 use validators::{
@@ -22,6 +23,7 @@ fn ofd_validator(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // Orchestrated batch validators (internally parallel with rayon)
     m.add_function(wrap_pyfunction!(validate_all, m)?)?;
+    m.add_function(wrap_pyfunction!(validate_all_with_changes, m)?)?;
     m.add_function(wrap_pyfunction!(validate_json_files, m)?)?;
     m.add_function(wrap_pyfunction!(validate_logo_files, m)?)?;
     m.add_function(wrap_pyfunction!(validate_folder_names, m)?)?;

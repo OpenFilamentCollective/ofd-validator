@@ -58,6 +58,41 @@ pub fn validate_all(
 }
 
 #[pyfunction]
+#[pyo3(signature = (data_dir, stores_dir, changes_json, schemas_dir=None, max_workers=None))]
+pub fn validate_all_with_changes(
+    py: Python<'_>,
+    data_dir: &str,
+    stores_dir: &str,
+    changes_json: &str,
+    schemas_dir: Option<&str>,
+    max_workers: Option<usize>,
+) -> ValidationResult {
+    let data_dir = PathBuf::from(data_dir);
+    let stores_dir = PathBuf::from(stores_dir);
+    let schemas_dir = PathBuf::from(schemas_dir.unwrap_or("schemas"));
+    let changes_json = changes_json.to_string();
+
+    py.allow_threads(|| {
+        with_thread_pool(max_workers, || {
+            log_step("Loading dataset", None);
+            let mut dataset = core::DataSet::from_directories(&data_dir, &stores_dir, &schemas_dir);
+
+            log_step("Applying pending changes", None);
+            dataset.apply_changes(&changes_json, &data_dir, &stores_dir);
+
+            log_step("Checking required files", None);
+            log_step("Validating JSON schemas", Some(dataset.json_entries.len()));
+            log_step("Validating logos", Some(dataset.logo_entries.len()));
+            log_step("Validating folder names", Some(dataset.folder_entries.len()));
+            log_step("Validating store IDs", None);
+            log_step("Validating GTIN/EAN codes", None);
+
+            core::validate_dataset(&dataset).into()
+        })
+    })
+}
+
+#[pyfunction]
 #[pyo3(signature = (data_dir, stores_dir, schemas_dir=None, max_workers=None))]
 pub fn validate_json_files(
     py: Python<'_>,
