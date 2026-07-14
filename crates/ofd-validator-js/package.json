@@ -47,7 +47,6 @@
   },
   "scripts": {
     "build": "napi build --release --platform",
-    "prepublishOnly": "napi prepublish --skip-gh-release",
     "artifacts": "napi artifacts"
   }
 }
