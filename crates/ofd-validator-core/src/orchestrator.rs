@@ -572,5 +572,40 @@ pub fn validate_dataset(dataset: &DataSet) -> ValidationResult {
     // 6. GTIN/EAN validation
     result.merge_from(&validators::validate_gtin_ean(&sizes_refs));
 
+    // 7. URL tracking parameters in purchase links (warnings)
+    result.merge_from(&validators::validate_url_tracking(&sizes_refs));
+
+    // 8. Variant colour-name / folder-id material-type redundancy (warnings)
+    let material_types: HashSet<String> = dataset
+        .schema_cache
+        .get("material_types")
+        .and_then(|s| s.get("enum"))
+        .and_then(|e| e.as_array())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(|s| s.to_ascii_uppercase()))
+                .collect()
+        })
+        .unwrap_or_else(|| {
+            validators::variant_material::MATERIAL_TYPES_FALLBACK
+                .iter()
+                .map(|s| s.to_string())
+                .collect()
+        });
+    let variant_refs: Vec<(&str, &Value)> = dataset
+        .json_entries
+        .iter()
+        .filter(|(_, schema_name, _)| schema_name == "variant")
+        .map(|(p, _, v)| (p.as_str(), v))
+        .collect();
+    result.merge_from(&validators::validate_variant_material(&variant_refs, &material_types));
+
+    // 9. Purchase-link host consistency vs the store's storefront (warnings)
+    let store_hosts = validators::store_host::build_store_hosts(&dataset.json_entries);
+    result.merge_from(&validators::validate_store_host(&store_hosts, &sizes_refs));
+
+    // 10. Generic purchase link reused across many variants of a filament (warnings)
+    result.merge_from(&validators::validate_duplicate_links(&sizes_refs));
+
     result
 }

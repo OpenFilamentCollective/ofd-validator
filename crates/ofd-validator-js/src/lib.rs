@@ -57,6 +57,23 @@ pub fn validate_all(
     core::validate_dataset(&dataset).into()
 }
 
+/// Validate the dataset after overlaying pending WebUI changes (mirrors the Python
+/// `validate_all_with_changes`). `changes_json` is the `{ "changes": [...] }` payload.
+#[napi]
+pub fn validate_all_with_changes(
+    data_dir: String,
+    stores_dir: String,
+    changes_json: String,
+    schemas_dir: Option<String>,
+) -> ValidationResult {
+    let data = PathBuf::from(&data_dir);
+    let stores = PathBuf::from(&stores_dir);
+    let schemas = PathBuf::from(schemas_dir.as_deref().unwrap_or("schemas"));
+    let mut dataset = core::DataSet::from_directories(&data, &stores, &schemas);
+    dataset.apply_changes(&changes_json, &data, &stores);
+    core::validate_dataset(&dataset).into()
+}
+
 #[napi]
 pub fn validate_json_files(
     data_dir: String,

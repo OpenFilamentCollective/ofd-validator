@@ -16,6 +16,13 @@ pub fn cleanse_folder_name(name: &str) -> String {
     name.replace('/', " ").trim().to_string()
 }
 
+/// Extract the host (e.g. `shop.polymaker.com`) from an absolute URL, if parseable.
+pub fn url_host(url: &str) -> Option<String> {
+    url::Url::parse(url)
+        .ok()
+        .and_then(|u| u.host_str().map(|h| h.to_string()))
+}
+
 #[cfg(feature = "filesystem")]
 pub fn load_json(path: &std::path::Path) -> Option<Value> {
     let content = std::fs::read_to_string(path).ok()?;

@@ -5,6 +5,8 @@ target
 
 # Node
 node_modules
+# napi-rs native binaries (built per-platform in CI; committed loader is index.js/index.d.ts)
+*.node
 
 # Python
 __pycache__/

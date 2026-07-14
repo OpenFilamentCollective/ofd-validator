@@ -1,13 +1,21 @@
+mod duplicate_link;
 mod folder_name;
 mod gtin;
 mod json_validator;
 mod logo_validator;
 pub mod missing_files;
+pub mod store_host;
 mod store_id;
+mod url_tracker;
+pub mod variant_material;
 
+pub use duplicate_link::validate_duplicate_links;
 pub use folder_name::validate_folder_name;
 pub use gtin::validate_gtin_ean;
 pub use json_validator::validate_json;
 pub use logo_validator::validate_logo;
 pub use missing_files::validate_required_files;
+pub use store_host::validate_store_host;
 pub use store_id::validate_store_ids;
+pub use url_tracker::validate_url_tracking;
+pub use variant_material::validate_variant_material;
