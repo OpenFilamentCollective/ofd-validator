@@ -169,7 +169,7 @@ jobs:
         with:
           pattern: binding-*
           merge-multiple: true
-          path: crates/ofd-validator-js
+          path: crates/ofd-validator-js/artifacts
 
       - name: Download JS loader
         uses: actions/download-artifact@v4
@@ -181,13 +181,30 @@ jobs:
         working-directory: crates/ofd-validator-js
         run: npm install
 
+      # Move each built .node from artifacts/ into its npm/<platform>/ package.
+      # Without this the platform packages publish WITHOUT their binary.
+      - name: Copy binaries into platform packages
+        working-directory: crates/ofd-validator-js
+        run: npx napi artifacts
+
       - name: Prepare platform packages
         working-directory: crates/ofd-validator-js
         run: npx napi prepublish --skip-gh-release
 
+      # Guard: never publish an empty platform package (each must contain its .node).
+      - name: Verify each platform package contains its binary
+        working-directory: crates/ofd-validator-js
+        run: |
+          fail=0
+          for dir in npm/*/; do
+            main=$(node -e "process.stdout.write(require('./$dir/package.json').main)")
+            if [ ! -f "$dir$main" ]; then echo "MISSING binary: $dir$main"; fail=1; fi
+          done
+          [ "$fail" = "0" ] || { echo "Refusing to publish — platform package(s) missing their .node"; exit 1; }
+
       - name: List packages
         working-directory: crates/ofd-validator-js
-        run: ls -lhR npm/ *.node 2>/dev/null || true
+        run: ls -lhR npm/ artifacts/ 2>/dev/null || true
 
       - name: Publish platform packages
         working-directory: crates/ofd-validator-js

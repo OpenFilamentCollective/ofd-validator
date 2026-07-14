@@ -805,7 +805,7 @@ dependencies = [
 
 [[package]]
 name = "ofd-validator-core"
-version = "0.5.1"
+version = "0.5.2"
 dependencies = [
  "image",
  "jsonschema",
@@ -819,7 +819,7 @@ dependencies = [
 
 [[package]]
 name = "ofd-validator-js"
-version = "0.5.1"
+version = "0.5.2"
 dependencies = [
  "napi",
  "napi-build",
@@ -832,7 +832,7 @@ dependencies = [
 
 [[package]]
 name = "ofd-validator-python"
-version = "0.5.1"
+version = "0.5.2"
 dependencies = [
  "ofd-validator-core",
  "pyo3",

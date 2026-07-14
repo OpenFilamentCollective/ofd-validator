@@ -1,6 +1,6 @@
 {
   "name": "@openfilamentcollective/ofd-validator",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "High-performance validation library for the Open Filament Database",
   "main": "index.js",
   "types": "index.d.ts",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/OpenFilamentCollective/ofd-validator"
+    "url": "git+https://github.com/OpenFilamentCollective/ofd-validator.git"
   },
   "license": "MIT",
   "keywords": [
@@ -36,11 +36,11 @@
     }
   },
   "optionalDependencies": {
-    "@openfilamentcollective/ofd-validator-win32-x64-msvc": "0.5.1",
-    "@openfilamentcollective/ofd-validator-darwin-x64": "0.5.1",
-    "@openfilamentcollective/ofd-validator-linux-x64-gnu": "0.5.1",
-    "@openfilamentcollective/ofd-validator-linux-arm64-gnu": "0.5.1",
-    "@openfilamentcollective/ofd-validator-darwin-arm64": "0.5.1"
+    "@openfilamentcollective/ofd-validator-win32-x64-msvc": "0.5.2",
+    "@openfilamentcollective/ofd-validator-darwin-x64": "0.5.2",
+    "@openfilamentcollective/ofd-validator-linux-x64-gnu": "0.5.2",
+    "@openfilamentcollective/ofd-validator-linux-arm64-gnu": "0.5.2",
+    "@openfilamentcollective/ofd-validator-darwin-arm64": "0.5.2"
   },
   "devDependencies": {
     "@napi-rs/cli": "^2.18.0"

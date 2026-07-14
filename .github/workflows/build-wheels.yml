@@ -186,3 +186,6 @@ jobs:
         with:
           packages-dir: dist/
           verbose: true
+          # Don't hard-fail if a file for this version is already on PyPI
+          # (e.g. a re-run) — skip it instead of erroring with 400.
+          skip-existing: true

@@ -1,6 +1,6 @@
 {
   "name": "@openfilamentcollective/ofd-validator-win32-x64-msvc",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "os": [
     "win32"
   ],
@@ -27,6 +27,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/OpenFilamentCollective/ofd-validator"
+    "url": "git+https://github.com/OpenFilamentCollective/ofd-validator.git"
   }
 }
