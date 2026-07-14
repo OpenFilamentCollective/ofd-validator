@@ -24,19 +24,14 @@ Requires Python 3.10+. No additional Python dependencies needed (self-contained 
 
 ### Node.js
 
-Published to [GitHub Packages](https://github.com/OpenFilamentCollective/ofd-validator/packages). Add a `.npmrc` in your project root:
-
-```
-@openfilamentcollective:registry=https://npm.pkg.github.com
-```
-
-Then install:
+Published to [npm](https://www.npmjs.com/package/@openfilamentcollective/ofd-validator). Install it like any public package — the matching prebuilt binary is pulled in automatically, **no Rust toolchain required**:
 
 ```bash
 npm install @openfilamentcollective/ofd-validator
 ```
 
-Prebuilt binaries included for Linux (x64, arm64), macOS (x64, arm64), and Windows (x64).
+Prebuilt binaries included for Linux (x64, arm64 — glibc), macOS (x64, arm64), and Windows (x64).
+(No prebuilt for musl/Alpine yet — those would need to build from source.)
 
 ## Python Usage
 

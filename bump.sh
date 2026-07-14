@@ -49,5 +49,10 @@ done
 # --- Regenerate Cargo.lock ---
 cargo update --workspace 2>/dev/null
 
+# --- Keep the JS package-lock.json version in sync (best-effort; needs npm) ---
+if command -v npm >/dev/null 2>&1; then
+    (cd crates/ofd-validator-js && npm install --package-lock-only --silent >/dev/null 2>&1) || true
+fi
+
 echo "Done. Files updated:"
 git diff --name-only

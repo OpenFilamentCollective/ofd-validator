@@ -51,15 +51,7 @@ maturin build --release     # still works
 
 ## New: JavaScript / Node.js Support
 
-Starting with this version, the validation library is also available as an npm package via [GitHub Packages](https://github.com/OpenFilamentCollective/ofd-validator/packages).
-
-Add a `.npmrc` in your project root:
-
-```
-@openfilamentcollective:registry=https://npm.pkg.github.com
-```
-
-Then install:
+Starting with this version, the validation library is also available as an npm package on [npm](https://www.npmjs.com/package/@openfilamentcollective/ofd-validator) — install it like any public package (prebuilt binaries, no Rust required):
 
 ```bash
 npm install @openfilamentcollective/ofd-validator
