@@ -45,3 +45,4 @@ venv.bak/
 
 # PyO3
 *.pyd
+*.code-workspace
