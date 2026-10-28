@@ -1,6 +1,6 @@
 [package]
 name = "ofd-validator-python"
-version = "0.5.3"
+version = "0.5.4"
 edition = "2021"
 authors = ["Open Filament Collective"]
 license = "MIT"
