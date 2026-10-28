@@ -75,6 +75,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # maturin can't build for an interpreter it can't find on Windows (there is no
+      # bundled sysconfig fallback without PyO3's generate-import-lib), so install
+      # every version it is asked to build for.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: |
+            3.10
+            3.11
+            3.12
+            3.13
+            3.14
+          architecture: ${{ matrix.target }}
+
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
